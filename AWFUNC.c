@@ -250,45 +250,14 @@ int BITSET(size_t pLength, char *pField, int pPosition, char pValue)
  *                          um die das Array verschoben werden
  *                          soll.
  */
-int BITSLR(size_t pLength, char *pField, int pBitCount)
+int BITSLR(size_t pLength, unsigned char *pField, int pBitCount)
 {
-    if (pBitCount == 0)
-        return; // Keine Verschiebung, wenn pBitCount 0
-
-    int byteShift = pBitCount / 8; // Ganze Byte Verschiebungen
-    int bitShift = pBitCount % 8;  // Restliche Bits verschieben
-
-    char output[pLength];
-    memset(output, 0, pLength); // Initialisiert das Ausgabe-Array mit 0
-
+    unsigned char carry = 0; // No carry into the last byte
     for (int i = 0; i < pLength; i++)
     {
-        int srcIndex = i + byteShift; // Berechnet den Index des
-                                      // Quellbytes.
-        char val1 = 0, val2 = 0;
-
-        // Verschiebt das Quellbyte rechts um die Anzahl der Bits.
-        if (srcIndex < pLength)
-            val1 = pField[srcIndex] >> bitShift;
-
-        // Holt die �berlaufenden Bits aus dem nachfolgenden Byte.
-        if (srcIndex + 1 < pLength && bitShift != 0)
-            val2 = pField[srcIndex + 1] << (8 - bitShift);
-
-        // Kombiniert die verschobenen Bits und die
-        // �berlaufenden Bits im Ausgabe-Array.
-        output[i] = val1 | val2;
-    }
-
-    // Kopiert das verschobene Array zurueck in das
-    // urspr�ngliche Array.
-    memcpy(pField, output, pLength);
-
-    // L�scht die letzten Bytes, wenn die Verschiebung ganze
-    // Bytes ueberschreitet.
-    if (byteShift > 0)
-    {
-        memset(pField + (pLength - byteShift), 0, byteShift);
+        unsigned char temp = pField[i];               // Save the value of the current byte
+        pField[i] = (pField[i] >> pBitCount) | carry; // Shift the current byte to the right and add the carry
+        carry = temp << (8 - pBitCount);              // Compute the new carry from the shifted-out bits
     }
     return 0;
 }
@@ -304,7 +273,7 @@ int BITSLR(size_t pLength, char *pField, int pBitCount)
  *                           um die das Array verschoben werden
  *                           soll.
  */
-int BITSLL(size_t pLength, char *pField, int pBitCount)
+int BITSLL(size_t pLength, unsigned char *pField, int pBitCount)
 {
 
     unsigned char carry = 0; // No carry into the first byte
